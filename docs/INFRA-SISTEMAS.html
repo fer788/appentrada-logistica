@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AppEntrada Logística — Informe para sistemas</title>
+  <style>
+    :root { font-family: "Segoe UI", system-ui, sans-serif; color: #111; }
+    body { max-width: 48rem; margin: 2rem auto; padding: 0 1.25rem; line-height: 1.45; font-size: 11pt; }
+    h1 { font-size: 1.35rem; border-bottom: 2px solid #2563eb; padding-bottom: 0.35rem; }
+    h2 { font-size: 1.05rem; margin-top: 1.35rem; color: #1e3a8a; }
+    table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; font-size: 10pt; }
+    th, td { border: 1px solid #cbd5e1; padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; }
+    pre { background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.65rem; font-size: 9pt; overflow-x: auto; }
+    .meta { font-size: 10pt; color: #334155; margin-bottom: 1rem; }
+    hr { border: none; border-top: 1px solid #e2e8f0; margin: 1.25rem 0; }
+    footer { margin-top: 2rem; font-size: 9pt; color: #64748b; }
+    @media print {
+      body { margin: 0; max-width: none; }
+      h2 { page-break-after: avoid; }
+      table, pre { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>AppEntrada Logística — Informe para sistemas</h1>
+<p class="meta">
+  <strong>Repositorio:</strong> https://github.com/fer788/appentrada-logistica.git<br />
+  <strong>Rama principal:</strong> <code>master</code><br />
+  <strong>Nota:</strong> documento vivo; revisar último commit en GitHub.
+</p>
+
+<h2>1. Propósito</h2>
+<p>Aplicación web interna de <strong>calendario de entregas / logística</strong>: grilla semanal (lunes a sábado), viajes por casilla, ABM de clientes, productos y choferes, exportación de datos, marcado de entregas realizadas, navegación por semanas del año, etc.</p>
+
+<h2>2. Arquitectura técnica</h2>
+<table>
+  <thead><tr><th>Capa</th><th>Tecnología</th><th>Ubicación en el repo</th></tr></thead>
+  <tbody>
+    <tr><td>Frontend</td><td>React 18, Vite 6</td><td><code>src/</code>, build en <code>dist/</code></td></tr>
+    <tr><td>Backend API</td><td>Node.js, Express</td><td><code>server/index.js</code></td></tr>
+    <tr><td>Base de datos</td><td><strong>MySQL 8.x</strong></td><td>Esquema y migraciones en <code>server/db.js</code></td></tr>
+  </tbody>
+</table>
+<p><strong>Flujo lógico (desarrollo típico)</strong></p>
+<ol>
+  <li>El navegador carga la interfaz desde <strong>Vite</strong> (puerto <strong>5173</strong>).</li>
+  <li>Las peticiones a <code>/api/*</code> las recibe Vite y las <strong>proxifica</strong> al backend Express (<strong>4000</strong>).</li>
+  <li>Express persiste y consulta datos en <strong>MySQL</strong> (<strong>3306</strong>).</li>
+</ol>
+<pre>[Navegador] → http://&lt;host&gt;:5173  →  Vite (proxy /api)
+                                    →  Express :4000  →  MySQL :3306</pre>
+<p>En <strong>producción</strong> sobre una misma VM, el mismo proceso Node puede servir la API y los archivos estáticos generados en <code>dist/</code> (ver sección 7).</p>
+
+<h2>3. Ubicación del código (referencia actual)</h2>
+<table>
+  <thead><tr><th>Descripción</th><th>Ruta típica</th></tr></thead>
+  <tbody>
+    <tr><td>Proyecto en disco de desarrollo</td><td><code>C:\AiProjects\AppEntrada\logistica</code></td></tr>
+    <tr><td>Copia en estructura local <code>aiprojects</code></td><td><code>C:\aiprojects\AppEntrada\dev\logistica</code></td></tr>
+  </tbody>
+</table>
+<p>El <strong>origen de verdad</strong> del código versionado es el repositorio Git remoto indicado arriba.</p>
+
+<h2>4. Configuración y secretos</h2>
+<ul>
+  <li>Archivo <strong><code>.env</code></strong> en la raíz del proyecto (no se sube al repositorio).</li>
+  <li>Plantilla de referencia: <strong><code>.env.example</code></strong>.</li>
+</ul>
+<table>
+  <thead><tr><th>Variable</th><th>Uso</th></tr></thead>
+  <tbody>
+    <tr><td><code>PORT</code></td><td>Puerto del servidor Express (por defecto <strong>4000</strong>)</td></tr>
+    <tr><td><code>MYSQL_HOST</code></td><td>Host de MySQL (ej. <code>127.0.0.1</code> o hostname de la VM)</td></tr>
+    <tr><td><code>MYSQL_PORT</code></td><td>Puerto MySQL (típicamente <strong>3306</strong>)</td></tr>
+    <tr><td><code>MYSQL_USER</code> / <code>MYSQL_PASSWORD</code></td><td>Credenciales</td></tr>
+    <tr><td><code>MYSQL_DATABASE</code></td><td>Nombre de la base (por defecto <strong><code>logistica_entregas</code></strong>)</td></tr>
+  </tbody>
+</table>
+<p><strong>Recomendación:</strong> en producción usar usuario MySQL dedicado con permisos mínimos sobre esa base, no <code>root</code> sin contraseña.</p>
+
+<h2>5. Base de datos</h2>
+<ul>
+  <li><strong>Motor:</strong> MySQL 8.x.</li>
+  <li><strong>Base lógica:</strong> <code>logistica_entregas</code> (configurable).</li>
+  <li><strong>Tablas principales:</strong> <code>clientes</code>, <code>choferes</code>, <code>productos</code>, <code>viajes</code> (esquema evolutivo vía migraciones al arrancar el servidor en <code>server/db.js</code>).</li>
+</ul>
+<p><strong>Datos en disco (modo desarrollo Windows)</strong></p>
+<p>Si se usa <code>npm run mysql:start</code>, puede utilizarse un <strong>datadir local</strong> del proyecto: carpeta <code>logistica\.mysql-data\</code>.</p>
+<p>En un <strong>servidor o VM corporativa</strong> lo habitual es un <strong>servicio MySQL</strong> con datadir estándar; el proyecto solo requiere la conexión vía <code>.env</code>.</p>
+
+<h2>6. Puertos y acceso en red</h2>
+<table>
+  <thead><tr><th>Servicio</th><th>Puerto</th><th>Notas</th></tr></thead>
+  <tbody>
+    <tr><td>Vite (solo desarrollo)</td><td><strong>5173</strong></td><td>UI; con <code>host: true</code> acepta conexiones LAN</td></tr>
+    <tr><td>Express API</td><td><strong>4000</strong></td><td>API REST; en dev el navegador suele ir solo a 5173 (proxy)</td></tr>
+    <tr><td>MySQL</td><td><strong>3306</strong></td><td>No exponer a internet; en LAN solo si hay requisito explícito</td></tr>
+  </tbody>
+</table>
+<p><strong>Acceso desde otras PCs en la misma red (modo desarrollo):</strong> <code>http://&lt;IPv4-del-servidor&gt;:5173</code></p>
+<p>El firewall del equipo servidor debe permitir <strong>TCP 5173</strong> (perfil <strong>Privada</strong>). Script de ayuda: <code>npm run lan:firewall</code> (PowerShell como administrador).</p>
+
+<h2>7. Comandos operativos</h2>
+<table>
+  <thead><tr><th>Comando</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td><code>npm install</code></td><td>Dependencias</td></tr>
+    <tr><td><code>npm run mysql:start</code></td><td>Intenta levantar MySQL local (Windows; ver <code>scripts/start-mysql.js</code>)</td></tr>
+    <tr><td><code>npm run dev</code></td><td>API + frontend en modo desarrollo</td></tr>
+    <tr><td><code>npm run build</code></td><td>Genera <code>dist/</code> para producción</td></tr>
+    <tr><td><code>npm start</code></td><td>Servidor Node en producción (API + estáticos desde <code>dist/</code>)</td></tr>
+  </tbody>
+</table>
+
+<h2>8. Automatización en la estación actual (referencia)</h2>
+<ul>
+  <li>Acceso directo en el <strong>Inicio de sesión</strong> de Windows que lanza MySQL + <code>npm run dev</code>.</li>
+  <li>Tarea programada tipo <strong>KeepAlive</strong> que ejecuta periódicamente <code>scripts/ensure-stack.ps1</code>.</li>
+</ul>
+<p>En la <strong>VM de producción</strong> conviene un <strong>servicio</strong> (Windows Service, PM2, NSSM, systemd, etc.) y supervisión estándar.</p>
+
+<h2>9. Respaldo y recuperación</h2>
+<table>
+  <thead><tr><th>Qué</th><th>Recomendación</th></tr></thead>
+  <tbody>
+    <tr><td>Base de datos</td><td><code>mysqldump</code> periódico de <code>logistica_entregas</code> + retención</td></tr>
+    <tr><td>Código</td><td>GitHub + procedimientos internos</td></tr>
+    <tr><td><code>.env</code></td><td>Respaldo cifrado o gestor de secretos; no en el repo</td></tr>
+    <tr><td><code>.mysql-data</code> (si aplica)</td><td>Respaldo en frío con MySQL detenido, o dumps lógicos</td></tr>
+  </tbody>
+</table>
+<p><strong>Recuperación típica:</strong> restaurar dump SQL, desplegar commit acordado, colocar <code>.env</code>, arrancar <code>npm start</code> o servicio equivalente.</p>
+
+<h2>10. Migración recomendada a máquina virtual (VM)</h2>
+<ol>
+  <li><strong>MySQL</strong> como servicio en la VM; BD y usuario con permisos acotados.</li>
+  <li><strong>Node.js LTS</strong> en la VM.</li>
+  <li>Clonar el repositorio, configurar <code>.env</code> apuntando al MySQL de la VM.</li>
+  <li><code>npm ci</code> → <code>npm run build</code> → <code>npm start</code> (o servicio gestionado).</li>
+  <li>Opcional: <strong>proxy inverso</strong> (IIS/nginx) con <strong>HTTPS</strong> y firewall mínimo.</li>
+  <li>MySQL solo en <strong>localhost</strong> de la VM salvo necesidad explícita.</li>
+</ol>
+
+<h2>11. Seguridad (resumen)</h2>
+<ul>
+  <li>No exponer MySQL a internet sin túnel/VPN y hardening.</li>
+  <li>En producción, evitar Vite; usar build + <code>npm start</code> o contenedor.</li>
+  <li>Revisar firewall y segmentación con sistemas.</li>
+</ul>
+
+<h2>12. Contacto y mantenimiento</h2>
+<ul>
+  <li><strong>Código e issues:</strong> repositorio GitHub del proyecto.</li>
+  <li><strong>Releases:</strong> definir política interna (tags, changelog).</li>
+</ul>
+
+<h2>Archivos en <code>docs/</code></h2>
+<table>
+  <thead><tr><th>Archivo</th><th>Uso</th></tr></thead>
+  <tbody>
+    <tr><td><code>INFRA-SISTEMAS.md</code></td><td>Fuente editable (Markdown)</td></tr>
+    <tr><td><code>INFRA-SISTEMAS.html</code></td><td>Navegador o Imprimir → Guardar como PDF</td></tr>
+    <tr><td><code>INFRA-SISTEMAS.pdf</code></td><td>PDF para compartir (<code>npm run docs:pdf</code>)</td></tr>
+  </tbody>
+</table>
+
+<footer>
+  Documento para el área de sistemas. Versión editable: <code>docs/INFRA-SISTEMAS.md</code> en el repositorio.
+</footer>
+</body>
+</html>

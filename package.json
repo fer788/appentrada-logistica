@@ -13,7 +13,17 @@
     "dev:client": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "sync": "node scripts/git-sync.js",
+    "sync:auto": "node scripts/git-sync.js --auto",
+    "sync:patch": "node scripts/git-sync.js --bump=patch --auto",
+    "autosync": "node scripts/git-autosync-daemon.js",
+    "autosync:patch": "node scripts/git-autosync-daemon.js --bump=patch",
+    "startup:install": "powershell -ExecutionPolicy Bypass -File scripts/install-startup.ps1",
+    "lan:firewall": "powershell -ExecutionPolicy Bypass -File scripts/open-lan-firewall.ps1",
+    "stack:ensure": "powershell -ExecutionPolicy Bypass -File scripts/ensure-stack.ps1",
+    "stack:autostart:install": "powershell -ExecutionPolicy Bypass -File scripts/install-stack-autostart.ps1",
+    "docs:pdf": "powershell -ExecutionPolicy Bypass -File scripts/generate-infra-pdf.ps1"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
